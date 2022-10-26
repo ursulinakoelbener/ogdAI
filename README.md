@@ -1,2 +1,1 @@
-# ogdAI
-Open Government Data from Appenzell Innerrhoden
+# Open Government Data from Appenzell Innerrhoden
