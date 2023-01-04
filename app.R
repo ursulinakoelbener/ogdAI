@@ -6,54 +6,82 @@ library(shinythemes) # Package for shiny app themes
 library(hrbrthemes) # Package for themes
 library(viridis) # Package for color palette
 library(plotly)
+library(rio) # package to load data
 
 Bezirke <- c("Appenzell", "Schwende", "Rüte", "Schlatt-Haslen", "Gonten", "Oberegg")
+arb_al <- rio::import("data_orig/arbeit_arbeitslosenquoten2009_2022.csv")
 
-# Define UI for application
+
+
+###############################################################################
+# Define UI for application -----
+###############################################################################
 ui <- navbarPage("Appenzell Innerrhoden in Zahlen",
                  # specify the theme
                  theme = shinytheme("paper"),
+                 # Bevölkerung -----
                  tabPanel("Bevölkerung",
                           sidebarLayout(
                             sidebarPanel(),
-                            mainPanel(
-                              fluidRow(
-                                column(width = 8, plotOutput("bev_entwicklung")),
-                                column(width = 4, p("Die Innerrhoder Bevölkerung ist im Jahr 2020 um 
-                                0.7% leicht angestiegen. Die Bezirke Schwende, 
-                                Rüte und Oberegg konnten 2020 ein Wachstum verzeichnen. 
-                                In den Bezirken Appenzell, Schlatt-Haslen und 
-                                Gonten waren die Bevölkerungszahlen dagegen leicht rückläufig."))
-                              ),
+                            mainPanel(),
                             ),
-                          )),
+                          ),
+                 # Bildung -----
                  tabPanel("Bildung"),
+                 # Gesundheit -----
                  tabPanel("Gesundheit"),
-                 tabPanel("Arbeit"),
+                 # Arbeit -----
+                 tabPanel("Arbeit",
+                 sidebarLayout(
+                   sidebarPanel(
+                     h2("Sidebar Panel"),
+                     sliderInput("jahr", label = h3("Zeitraum"),
+                                 min = 2009, max = 2022, value = c(2016,2022),
+                                 sep = '')
+                     ),
+                   
+                   mainPanel(
+                     h1("Arbeitslosigkeit in Appenzell I.Rh."),
+                     plotOutput("plot_arb_al")
+                     
+                        ),
+                 ),
+                 ),
+                 #Volkswirtschaft -----
                  tabPanel("Volkswirtschaft"),
+                 # Tourismus -----
                  tabPanel("Tourismus"),
+                 # Verkehr -----
                  tabPanel("Verkehr")
 )
-
-# Define server side logic
+###############################################################################
+# Define server side logic ----
+###############################################################################
 server <- function(input, output, session) {
   
-  # vorbereiten: Bevölkerungsentwicklung -----
-  bev_plot_df <- reactive({
-    bev %>%
-      mutate(Bezirk = factor(Bezirk, levels = Bezirke)) %>% 
-      filter(Art == "Wohnbevölkerung") %>% 
-      arrange(Jahr)
+  #Output Arbeit: Arbeitslosenquote -----
+  output$plot_arb_al <- renderPlotly({
+    ggplot(data = arb_al()) +
+      geom_line(mapping = aes(x = Monat, AI))
   })
   
-  # Output: Bevölkerungsentwicklung -----
-  output$bev_entwicklung <- renderPlot({
-    ggplot(data = bev_plot_df(), mapping = aes(x = Jahr, y = Anz, group = Bezirk, fill = Bezirk)) +
-      geom_area()+
-      scale_fill_viridis(discrete = TRUE)
-  })
+  # # vorbereiten: Bevölkerungsentwicklung -----
+  # bev_plot_df <- reactive({
+  #   bev %>%
+  #     mutate(Bezirk = factor(Bezirk, levels = Bezirke)) %>% 
+  #     filter(Art == "Wohnbevölkerung") %>% 
+  #     arrange(Jahr)
+  # })
+  # 
+  # # Output: Bevölkerungsentwicklung -----
+  # output$bev_entwicklung <- renderPlot({
+  #   ggplot(data = bev_plot_df(), mapping = aes(x = Jahr, y = Anz, group = Bezirk, fill = Bezirk)) +
+  #     geom_area()+
+  #     scale_fill_viridis(discrete = TRUE)
+  # })
   
 }
-
-# Run the application 
+###############################################################################
+# Run the application -----
+###############################################################################
 shinyApp(ui = ui, server = server)
